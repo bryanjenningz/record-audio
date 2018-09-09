@@ -20,4 +20,4 @@ The following code will record audio for 3 seconds, then play back the audio tha
 
 Make sure your browser is up to date.
 
-Clone the repo, then open index.html and start talking. You will be recorded for 3 seconds, then your recording will be played back.
+Clone the repo, then open index.html, then press action button and start talking. You will be recorded for 3 seconds, then your recording will be played back.
