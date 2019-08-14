@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Record and save audio</title>
+  </head>
+  <body>
+    <button id="record">Record</button>
+    <button id="stop" disabled>Stop</button>
+    <button id="play" disabled>Play</button>
+    <button id="save" disabled>Save</button>
+
+    <div id="saved-audio-messaages"></div>
+
+    <script>
+      const recordAudio = () =>
+        new Promise(async resolve => {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          const mediaRecorder = new MediaRecorder(stream);
+          let audioChunks = [];
+
+          mediaRecorder.addEventListener('dataavailable', event => {
+            audioChunks.push(event.data);
+          });
+
+          const start = () => {
+            audioChunks = [];
+            mediaRecorder.start();
+          };
+
+          const stop = () =>
+            new Promise(resolve => {
+              mediaRecorder.addEventListener('stop', () => {
+                const audioBlob = new Blob(audioChunks);
+                const audioUrl = URL.createObjectURL(audioBlob);
+                const audio = new Audio(audioUrl);
+                const play = () => audio.play();
+                resolve({ audioChunks, audioBlob, audioUrl, play });
+              });
+
+              mediaRecorder.stop();
+            });
+
+          resolve({ start, stop });
+        });
+
+      const sleep = time => new Promise(resolve => setTimeout(resolve, time));
+
+      const recordButton = document.querySelector('#record');
+      const stopButton = document.querySelector('#stop');
+      const playButton = document.querySelector('#play');
+      const saveButton = document.querySelector('#save');
+      const savedAudioMessagesContainer = document.querySelector('#saved-audio-messaages');
+
+      let recorder;
+      let audio;
+
+      recordButton.addEventListener('click', async () => {
+        recordButton.setAttribute('disabled', true);
+        stopButton.removeAttribute('disabled');
+        playButton.setAttribute('disabled', true);
+        saveButton.setAttribute('disabled', true);
+        if (!recorder) {
+          recorder = await recordAudio();
+        }
+        recorder.start();
+      });
+
+      stopButton.addEventListener('click', async () => {
+        recordButton.removeAttribute('disabled');
+        stopButton.setAttribute('disabled', true);
+        playButton.removeAttribute('disabled');
+        saveButton.removeAttribute('disabled');
+        audio = await recorder.stop();
+      });
+
+      playButton.addEventListener('click', () => {
+        audio.play();
+      });
+
+      saveButton.addEventListener('click', () => {
+        const reader = new FileReader();
+        reader.readAsDataURL(audio.audioBlob);
+        reader.onload = () => {
+          const base64AudioMessage = reader.result.replace(
+            /^data:application\/octet-stream;base64,/,
+            'data:audio/wav;base64,'
+          );
+
+          fetch('/message', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: base64AudioMessage })
+          }).then(res => {
+            if (res.status === 201) {
+              return populateAudioMessages();
+            }
+            console.log('Invalid status saving audio message: ' + res.status);
+          });
+        };
+      });
+
+      const populateAudioMessages = () => {
+        return fetch('/message').then(res => {
+          if (res.status === 200) {
+            return res.json().then(json => {
+              json.messageFilenames.forEach(filename => {
+                let audioElement = document.querySelector(`[data-audio-filename="${filename}"]`);
+                if (!audioElement) {
+                  audioElement = document.createElement('button');
+                  audioElement.textContent = 'Play saved audio';
+                  audioElement.setAttribute('data-audio-filename', filename);
+                  audioElement.addEventListener('click', () => {
+                    fetch('/message/' + filename, { headers: { Accept: 'application/json' } }).then(
+                      res => {
+                        if (res.status === 200) {
+                          return res.text().then(base64AudioMessage => {
+                            const audio = new Audio(base64AudioMessage);
+                            audio.play();
+                          });
+                        }
+                        console.log('Invalid status getting message: ' + res.status);
+                      }
+                    );
+                  });
+                  savedAudioMessagesContainer.appendChild(audioElement);
+                }
+              });
+            });
+          }
+          console.log('Invalid status getting messages: ' + res.status);
+        });
+      };
+
+      populateAudioMessages();
+    </script>
+  </body>
+</html>
