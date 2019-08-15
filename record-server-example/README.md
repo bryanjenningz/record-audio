@@ -6,7 +6,7 @@ This is a simple example of how to record audio and save audio to a Node server.
 
 First create a message directory which is where all audio messages will be saved.
 ```
-mkdir message
+mkdir public/message
 ```
 
 Then npm install or yarn install.
