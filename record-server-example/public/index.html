@@ -2,6 +2,12 @@
 <html>
   <head>
     <title>Record and save audio</title>
+    <style>
+      audio {
+        display: block;
+        margin: 5px;
+      }
+    </style>
   </head>
   <body>
     <button id="record">Record</button>
@@ -9,7 +15,9 @@
     <button id="play" disabled>Play</button>
     <button id="save" disabled>Save</button>
 
-    <div id="saved-audio-messaages"></div>
+    <div id="saved-audio-messages">
+      <h2>Saved messages</h2>
+    </div>
 
     <script>
       const recordAudio = () =>
@@ -49,7 +57,7 @@
       const stopButton = document.querySelector('#stop');
       const playButton = document.querySelector('#play');
       const saveButton = document.querySelector('#save');
-      const savedAudioMessagesContainer = document.querySelector('#saved-audio-messaages');
+      const savedAudioMessagesContainer = document.querySelector('#saved-audio-messages');
 
       let recorder;
       let audio;
@@ -81,12 +89,9 @@
         const reader = new FileReader();
         reader.readAsDataURL(audio.audioBlob);
         reader.onload = () => {
-          const base64AudioMessage = reader.result.replace(
-            /^data:application\/octet-stream;base64,/,
-            'data:audio/wav;base64,'
-          );
+          const base64AudioMessage = reader.result.split(',')[1];
 
-          fetch('/message', {
+          fetch('/messages', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: base64AudioMessage })
@@ -100,28 +105,16 @@
       });
 
       const populateAudioMessages = () => {
-        return fetch('/message').then(res => {
+        return fetch('/messages').then(res => {
           if (res.status === 200) {
             return res.json().then(json => {
               json.messageFilenames.forEach(filename => {
                 let audioElement = document.querySelector(`[data-audio-filename="${filename}"]`);
                 if (!audioElement) {
-                  audioElement = document.createElement('button');
-                  audioElement.textContent = 'Play saved audio';
+                  audioElement = document.createElement('audio');
+                  audioElement.src = `/messages/${filename}`;
                   audioElement.setAttribute('data-audio-filename', filename);
-                  audioElement.addEventListener('click', () => {
-                    fetch('/message/' + filename, { headers: { Accept: 'application/json' } }).then(
-                      res => {
-                        if (res.status === 200) {
-                          return res.text().then(base64AudioMessage => {
-                            const audio = new Audio(base64AudioMessage);
-                            audio.play();
-                          });
-                        }
-                        console.log('Invalid status getting message: ' + res.status);
-                      }
-                    );
-                  });
+                  audioElement.setAttribute('controls', true);
                   savedAudioMessagesContainer.appendChild(audioElement);
                 }
               });
