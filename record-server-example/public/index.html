@@ -3,10 +3,10 @@
   <head>
     <title>Record and save audio</title>
     <style>
-audio {
-  display: block;
-  margin: 5px;
-}
+      audio {
+        display: block;
+        margin: 5px;
+      }
     </style>
   </head>
   <body>
@@ -89,7 +89,7 @@ audio {
         const reader = new FileReader();
         reader.readAsDataURL(audio.audioBlob);
         reader.onload = () => {
-          const base64AudioMessage = reader.result.split(',')[1]
+          const base64AudioMessage = reader.result.split(',')[1];
 
           fetch('/messages', {
             method: 'POST',
@@ -112,7 +112,7 @@ audio {
                 let audioElement = document.querySelector(`[data-audio-filename="${filename}"]`);
                 if (!audioElement) {
                   audioElement = document.createElement('audio');
-                  audioElement.src=`/messages/${filename}`
+                  audioElement.src = `/messages/${filename}`;
                   audioElement.setAttribute('data-audio-filename', filename);
                   audioElement.setAttribute('controls', true);
                   savedAudioMessagesContainer.appendChild(audioElement);

@@ -7,8 +7,8 @@ const writeFile = promisify(fs.writeFile);
 const readdir = promisify(fs.readdir);
 
 // make sure messages folder exists
-const messageFolder = './public/messages/'
-if (!fs.existsSync(messageFolder)){
+const messageFolder = './public/messages/';
+if (!fs.existsSync(messageFolder)) {
   fs.mkdirSync(messageFolder);
 }
 
