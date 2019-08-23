@@ -6,13 +6,19 @@ const { v4 } = require('uuid');
 const writeFile = promisify(fs.writeFile);
 const readdir = promisify(fs.readdir);
 
+// make sure messages folder exists
+const messageFolder = './public/messages/'
+if (!fs.existsSync(messageFolder)){
+  fs.mkdirSync(messageFolder);
+}
+
 const app = express();
 
 app.use(express.static('public'));
 app.use(express.json());
 
-app.get('/message', (req, res) => {
-  readdir('./public/message')
+app.get('/messages', (req, res) => {
+  readdir(messageFolder)
     .then(messageFilenames => {
       res.status(200).json({ messageFilenames });
     })
@@ -22,12 +28,12 @@ app.get('/message', (req, res) => {
     });
 });
 
-app.post('/message', (req, res) => {
+app.post('/messages', (req, res) => {
   if (!req.body.message) {
     return res.status(400).json({ error: 'No req.body.message' });
   }
   const messageId = v4();
-  writeFile('./public/message/' + messageId, req.body.message)
+  writeFile(messageFolder + messageId, req.body.message, 'base64')
     .then(() => {
       res.status(201).json({ message: 'Saved message' });
     })
