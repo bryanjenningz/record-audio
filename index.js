@@ -13,7 +13,7 @@ const recordAudio = () =>
     const stop = () =>
       new Promise(resolve => {
         mediaRecorder.addEventListener("stop", () => {
-          const audioBlob = new Blob(audioChunks);
+          const audioBlob = new Blob(audioChunks, { type: "audio/mpeg" });
           const audioUrl = URL.createObjectURL(audioBlob);
           const audio = new Audio(audioUrl);
           const play = () => audio.play();
@@ -30,7 +30,7 @@ const sleep = time => new Promise(resolve => setTimeout(resolve, time));
 
 const handleAction = async () => {
   const recorder = await recordAudio();
-  const actionButton = document.getElementById('action');
+  const actionButton = document.getElementById("action");
   actionButton.disabled = true;
   recorder.start();
   await sleep(3000);
@@ -38,4 +38,4 @@ const handleAction = async () => {
   audio.play();
   await sleep(3000);
   actionButton.disabled = false;
-}
+};
