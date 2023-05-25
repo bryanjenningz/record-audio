@@ -17,6 +17,7 @@ const recordAudio = () =>
           const audioUrl = URL.createObjectURL(audioBlob);
           const audio = new Audio(audioUrl);
           const play = () => audio.play();
+          stream.getTracks().forEach((track) => track.stop());
           resolve({ audioBlob, audioUrl, play });
         });
 
